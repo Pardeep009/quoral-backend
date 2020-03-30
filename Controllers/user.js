@@ -1,9 +1,9 @@
 const User = require("../Modals/user");
 const expressJwt = require("express-jwt");
-require("dotenv").config();
+const bcrypt = require("bcrypt");
+const saltRounds = 10;              // can be any integer
 
 const {ObjectId} = require("mongodb");
-const saltRounds = 10;
 
 exports.findUserByEmailOrUsername = (obj,callback) => {
     User.findOne({$or: [
@@ -21,21 +21,35 @@ exports.findUserByEmailOrUsername = (obj,callback) => {
 }
 
 exports.addUser = (obj,callback) => {
-    let newUser = new User();
-        newUser.encryptPassword(obj.password,(hash)=> {
-        newUser.hashed_password = hash;
-        newUser.email = obj.email;
-        newUser.username = obj.username;
-        newUser.verify_token = obj.verify_token;
-        newUser.save((error, user) => { 
+    // let newUser = new User();
+    //     encryptPassword(obj.password,(hash)=> {
+    //     newUser.hashed_password = hash;
+    //     newUser.email = obj.email;
+    //     newUser.username = obj.username;
+    //     newUser.verify_token = obj.verify_token;
+    //     newUser.save((error, user) => { 
+    //         if(error) {
+    //             callback(error,null);
+    //         }
+    //         else {
+    //             callback(null,user);
+    //         } 
+    //     });
+    // });
+    encryptPassword(obj.password,(hashed_password) => {
+        console.log('encryptPassword callback');
+        let { email, username, verify_token, } = obj;
+        let user = { email, username, verify_token, hashed_password };
+        console.log(user);
+        User.create(user,(error,user) => {
             if(error) {
                 callback(error,null);
             }
             else {
                 callback(null,user);
-            } 
-        });
-    });
+            }
+        })
+    })
 }
 
 exports.verifyUser = (obj,callback) => {
@@ -77,7 +91,7 @@ exports.addResetPasswordToken = (obj,callback) => {
 }
 
 exports.updatePassword = (obj,callback) => {
-    encryptPassword(obj.new_password,(new_hashed_password) => {
+    encryptPassword(obj.password,(new_hashed_password) => {
         User.updateOne({
             username : obj.username
         },{
@@ -96,10 +110,6 @@ exports.updatePassword = (obj,callback) => {
     })
 }
 
-exports.logout = (obj,callback) => {
-
-}
-
 exports.requireSignin = expressJwt({
     secret : process.env.JWT_SECRET,
     userProperty : "auth"
@@ -107,7 +117,8 @@ exports.requireSignin = expressJwt({
 
 function encryptPassword(plaintextPassword,callback) {
     bcrypt.hash(plaintextPassword, saltRounds, function(err, hash)  {
-        if(err) throw err;
+        // if(err) throw err;
+        console.log('encryptPassword');
         callback(hash);
       })
 }

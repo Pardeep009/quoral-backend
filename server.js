@@ -11,7 +11,8 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 
-mongoose.connect(process.env.DATABASE_URL, {
+mongoose.connect('mongodb://localhost/quoral',{
+// mongoose.connect(process.env.DATABASE_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true
     })
@@ -27,7 +28,6 @@ app.use(cookieParser());
 app.use(expressValidator());
 
 app.use("/", require("./Routes/user"));
-
 
 app.listen(`${process.env.PORT}`, function() {
         console.log(`Running on port ${process.env.PORT}`);

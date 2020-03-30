@@ -79,7 +79,6 @@ router.post('/addUser',validator.signupValidator,(req,res) => {
             }
         }
         else {
-            console.log(req.headers.host);
             const token = jwt.sign({ username : obj.username }, process.env.JWT_SECRET).split('.')[2];
             const link = `${process.env.HOSTNAME}`+"/verify?username="+obj.username+"&token="+token;
             const mailOptions = {
@@ -89,8 +88,6 @@ router.post('/addUser',validator.signupValidator,(req,res) => {
                 html : '<p>Click <a href="'+link+'">here</a> to activate your account</p>'
             };
             sendMail(mailOptions,(error,info) => {
-                // console.log(error);
-                // console.log(info);
                 if(error) {
                     return res.status(500).json({
                         error : err
@@ -182,7 +179,7 @@ router.post('/sendResetLink',(req,res) => {
         else {
             const token = jwt.sign({ email : obj.email }, process.env.JWT_SECRET).split('.')[2];
             obj.token = token;
-            const link = `${process.env.HOSTNAME}`+"+/reset-password?email="+obj.email+"&token="+token;
+            const link = `${process.env.HOSTNAME}`+"/reset-password?email="+obj.email+"&token="+token;
             const mailOptions = {
                 from: `${process.env.YOUR_GMAIL_USERNAME}`,
                 to: obj.email,
@@ -214,9 +211,9 @@ router.post('/sendResetLink',(req,res) => {
     })
 })
 
-router.post('/resetPassword',(req,res) => {
-    const { email, new_password, token } = req.body;
-    const obj = { email, new_password, token }
+router.post('/resetPassword',validator.passwordValidator,(req,res) => {
+    const { email, password, token } = req.body;
+    const obj = { email, password, token }
     obj.username = '';
     Usercontroller.findUserByEmailOrUsername(obj,(error,user) => {
         if(error)
